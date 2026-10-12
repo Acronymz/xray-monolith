@@ -1,0 +1,30 @@
+name: Pack modded exes gamedata
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pack_gamedata:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Pack gamedata
+      run: |
+        new-item -path "./compressor/gamedata" -itemtype directory -force
+        copy-item -path "./gamedata/*" -destination "./compressor/gamedata" -recurse -force
+        cd ./compressor
+        start-process -filepath "./! compress_gamedata.cmd" -Wait
+        rename-item -path gamedata.db0 -newname 00_modded_exes_gamedata.db0
+
+    - name: Upload gamedata
+      uses: actions/upload-artifact@v4.6.0
+      with:
+        name: 00_modded_exes_gamedata.db0
+        path: ./compressor/00_modded_exes_gamedata.db0
+        if-no-files-found: "error"
+        retention-days: 14
